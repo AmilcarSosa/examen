@@ -89,12 +89,12 @@
                             <div class="row">
                                 <div class="form-group col-lg-6 col-md-6 col-sm-12">
                                     <label>Salario en dolares*</label>
-                                    <input class="form-control" type="text" v-model="empleado.salario_dolar"
+                                    <input class="form-control" type="number" v-model="empleado.salario_dolar"
                                            @keyup="calcularPesos()">
                                 </div>
                                 <div class="form-group col-lg-6 col-md-6 col-sm-12">
                                     <label>Salario en pesos*</label>
-                                    <input class="form-control" type="text" v-model="empleado.salario_pesos">
+                                    <input class="form-control" type="text" disabled v-model="empleado.salario_pesos">
                                 </div>
                             </div>
                             <div class="row">
@@ -115,6 +115,8 @@
                                 <div class="form-group col-lg-6 col-md-6 col-sm-12">
                                     <label>Correo*</label>
                                     <input class="form-control" type="text" v-model="empleado.correo">
+                                    <input @change="cambiarValor()" hidden id="valorDato" class="form-control"
+                                           type="text" ref="myTestField">
                                 </div>
                             </div>
                         </div>
@@ -209,30 +211,14 @@
                     telefono: undefined,
                     correo: undefined,
                 },
-                valorDolar: undefined,
-                mensaje:undefined,
-                errores:[],
-                btnAlert:false
+                valorDolar: 0,
+                mensaje: undefined,
+                errores: [],
+                btnAlert: false
             }
         },
         created() {
             this.buscar();
-            axios.get(
-                'http://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43718/datos/2020-02-19/2020-02-19',
-                {
-                    method: 'GET',
-                    mode: 'no-cors',
-                    headers: {
-                    'Access-Control-Allow-Origin': '*',
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bmx-Token 0fce7d85c76c9afa6f8ef05f95d50a11c62573c637d28706e28f2a81e84264e5',
-                    },
-                    withCredentials: true,
-                    credentials: 'same-origin'
-                })
-                .then((res) => {
-                    console.log(res);
-                })
         },
         methods: {
             buscar() {
@@ -262,8 +248,8 @@
             detalle(value) {
                 const select = JSON.stringify(value)
                 this.empleado = JSON.parse(select);
-                this.empleado.estimadoPesos = ((this.empleado.salario_pesos*.05)*6).toFixed(2)
-                this.empleado.estimadoDolar = ((this.empleado.salario_dolar*.05)*6).toFixed(2)
+                this.empleado.estimadoPesos = ((this.empleado.salario_pesos * .05) * 6).toFixed(2)
+                this.empleado.estimadoDolar = ((this.empleado.salario_dolar * .05) * 6).toFixed(2)
                 $('#moldalDetalle').modal('show')
             },
             eliminar(id) {
@@ -277,6 +263,28 @@
                     .then((res) => {
                         this.buscar();
                     })
+            },
+            calcularPesos() {
+                $.ajax({
+                    url: "http://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43718/datos/2020-02-19/2020-02-19?token=0fce7d85c76c9afa6f8ef05f95d50a11c62573c637d28706e28f2a81e84264e5",
+                    jsonp: "callback",
+                    dataType: "jsonp",
+                    success: function (response) {
+
+                        var datos = response.bmx.series[0].datos[0].dato;
+                        $('#valorDato').val(datos)
+                        $('#valorDato')[0].dispatchEvent(new Event('change'));
+                    },
+                });
+            },
+            cambiarValor() {
+                this.valorDolar = this.$refs.myTestField.value
+                if (this.empleado.salario_dolar !== undefined && this.empleado.salario_dolar !== '') {
+                    console.log(parseFloat(this.empleado.salario_dolar), this.valorDolar)
+                    this.empleado.salario_pesos = (parseFloat(this.empleado.salario_dolar) * parseFloat(this.valorDolar)).toFixed(2);
+                } else {
+                    this.empleado.salario_pesos = undefined;
+                }
             }
         }
 
