@@ -16,7 +16,7 @@ class empleadosRequest extends FormRequest
     {
         return  [
             'nombre' => 'alpha|required',
-            'dieccion' => 'required',
+            'direccion' => 'required',
             'ciudad' => 'required',
             'telefono' => 'numeric|required',
             'correo' => 'email|required',
